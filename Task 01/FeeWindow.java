@@ -1,104 +1,84 @@
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
 
-public class FeeWindow extends Frame {
+public class FeePaymentApp extends JFrame {
 
-    TextField regNo = new TextField(15);
+    JTextField name = new JTextField(15);
+    JTextField amount = new JTextField(15);
 
-    TextField amount = new TextField(15);
+    JComboBox<String> mode =
+        new JComboBox<>(new String[]{"Online", "Cash"});
 
-    Button pay = new Button("Pay");
+    JButton pay = new JButton("Pay");
+    JButton receipt = new JButton("Receipt");
 
-    Button clear = new Button("Clear");
-
-    Button receipt = new Button("Receipt");
+    JLabel result = new JLabel("Enter payment details");
 
     FeeService service = new FeeService();
 
-    String lastReceipt = "";
+    String paymentResult = "";
 
-    public FeeWindow() {
+    FeePaymentApp() {
 
         setTitle("Student Fee Payment");
+        setLayout(new GridLayout(5, 2, 5, 5));
 
-        setLayout(new GridLayout(4, 2, 10, 10));
+        add(new JLabel("Student Name:"));
+        add(name);
 
-        add(new Label("Register Number:"));
-
-        add(regNo);
-
-        add(new Label("Amount:"));
-
+        add(new JLabel("Amount:"));
         add(amount);
 
+        add(new JLabel("Payment Mode:"));
+        add(mode);
+
         add(pay);
-
-        add(clear);
-
         add(receipt);
+
+        add(new JLabel("Status:"));
+        add(result);
 
         pay.addActionListener(e -> {
 
-            String result = service.payFee(
-                regNo.getText(),
-                amount.getText()
+            paymentResult = service.processPayment(
+                name.getText(),
+                amount.getText(),
+                (String) mode.getSelectedItem()
             );
 
-            lastReceipt = result;
+            result.setText(paymentResult.split("\n")[0]);
 
-            JOptionPane.showMessageDialog(this, result);
-
-        });
-
-        clear.addActionListener(e -> {
-
-            regNo.setText("");
-
-            amount.setText("");
-
+            JOptionPane.showMessageDialog(
+                this, paymentResult
+            );
         });
 
         receipt.addActionListener(e -> {
 
-            if (lastReceipt.isEmpty()) {
-
+            if (paymentResult.startsWith("Payment Successful")) {
                 JOptionPane.showMessageDialog(
-                    this, "No payment receipt available"
+                    this, paymentResult,
+                    "Payment Receipt",
+                    JOptionPane.INFORMATION_MESSAGE
                 );
-
             } else {
-
                 JOptionPane.showMessageDialog(
-                    this, lastReceipt
+                    this, "Complete payment first."
                 );
-
             }
-
-        });
-
-        addWindowListener(new WindowAdapter() {
-
-            @Override
-            public void windowClosing(WindowEvent e) {
-
-                dispose();
-
-            }
-
         });
 
         setSize(400, 250);
-
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
         setVisible(true);
-
     }
 
     public static void main(String[] args) {
-
-        new FeeWindow();
-
+        SwingUtilities.invokeLater(
+            () -> new FeePaymentApp()
+        );
     }
-
 }
