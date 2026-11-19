@@ -1,129 +1,80 @@
-# TASK 1 – GUI DESIGN REVIEW
+# Task 1 – GUI Design Review
 
-**Bloom's Level:** K4 – Analyse
+## 1. Diagnosis of Design Problems
 
-## Diagnose and Repair a Poor Event-Handling Design
+| No. | Design Problem | Impact |
+|---|---|---|
+| 1 | No separation of concerns | UI and business logic become difficult to maintain. |
+| 2 | Incorrect String comparison using `==` | String values may not be compared correctly. |
+| 3 | No input validation | Empty or invalid payment details may be accepted. |
+| 4 | Database access inside event handler | The interface may freeze during database operations. |
+| 5 | Use of Thread.sleep() | Blocks the Event Dispatch Thread (EDT). |
+| 6 | No proper user feedback | Students cannot understand whether payment succeeded or failed. |
+| 7 | Receipt action not handled separately | Receipt generation becomes difficult to maintain. |
+| 8 | Unsafe SQL statements | SQL injection may occur if user input is directly concatenated. |
+| 9 | Resources are not closed | Database connections and statements may leak. |
+| 10 | Poor exception handling | Errors may terminate the application or remain hidden. |
 
-A junior developer has built a student fee-payment window. Every button is handled by the same listener, and the complete program logic is written inside it.
+## 2. Corrected Application Design
 
-### Task 1.1 – Diagnose the Design
+The application should use separate classes for the user interface and payment processing.
 
-The given student fee-payment program contains the following design deficiencies:
+### Class Structure
 
-**1. Poor separation of interface and application logic**
+```text
+          FeePaymentApp
+          (JFrame / UI)
+                 |
+                 | User Actions
+                 v
+             FeeService
+       (Validation and Payment)
+                 |
+                 v
+             PaymentDAO
+          (Database Operations)
+                 |
+                 v
+               MySQL
+```
 
-- The complete payment and database operations are written inside the `actionPerformed()` method.
-- This makes the program difficult to understand, test and maintain.
-- The solution is to separate the GUI from the business logic using a `FeeService` class.
+### Responsibilities
 
-**2. Incorrect String comparison**
+| Class | Responsibility |
+|---|---|
+| FeePaymentApp | Collects input and displays results. |
+| FeeService | Validates details and processes payments. |
+| PaymentDAO | Handles database operations. |
+| Receipt | Generates payment receipts. |
 
-- The code uses `==` to compare the action command with `"Pay"`.
-- In Java, `==` compares object references instead of String contents.
-- The correct method is `.equals()`.
+## 3. Corrected Event Handling
 
-**3. No input validation**
+The following code demonstrates separate UI and payment-service logic.
 
-- The program does not check whether the registration number and amount fields are empty.
-- It does not check whether the amount is a valid positive number.
-- Invalid input may cause `NumberFormatException` or incorrect database entries.
+Refer to `FeeService.java` and `FeePaymentApp.java` for the complete implementation.
 
-**4. Database operations on the Event Dispatch Thread (EDT)**
+## 4. Comparison of Listener Approaches
 
-- Database operations are performed inside `actionPerformed()`.
-- The GUI event-dispatch thread becomes busy while processing the database request.
-- As a result, the window may freeze and become unresponsive.
-- Background processing using `SwingWorker` should be used instead.
+| Shared Listener | Separate Listeners |
+|---|---|
+| One listener handles multiple buttons. | Each button has its own listener. |
+| Requires checking the event source. | Each action is handled independently. |
+| Can become lengthy. | Easier to read and maintain. |
+| Suitable for simple applications. | Suitable for larger applications. |
 
-**5. Use of Thread.sleep()**
+**Swing Action:** An Action object can combine an action's behaviour, name, icon and enabled state. It can be reused by buttons and menu items.
 
-- `Thread.sleep(3000)` pauses the GUI thread for three seconds.
-- The user cannot interact with the window during this time.
-- Background processing using `SwingWorker` should be used instead.
+## 5. Design Justification (Within 100 Words)
 
-**6. No proper user feedback**
+The redesigned application separates the user interface from payment processing. FeePaymentApp collects input and displays results, while FeeService validates and processes payments. This separation improves readability, reusability, testing and maintenance. Separate listeners make button actions easier to understand. Input validation prevents incorrect values, and proper exception handling improves reliability. Database operations should be performed using a separate DAO class with prepared statements and closed resources. Long-running operations should execute in the background to prevent the GUI from freezing.
 
-- The program only displays `"Paid"` using `System.out.println()`.
-- The user does not receive a proper confirmation message on the GUI.
-- A `JOptionPane` dialog or status label should display the payment result.
+## 6. Complexity Analysis
 
-**7. Receipt button is not implemented**
+| Operation | Time Complexity | Space Complexity |
+|---|---|---|
+| Student name validation | O(n) | O(1) |
+| Amount validation | O(1) | O(1) |
+| Payment processing (without database) | O(n) | O(n) |
+| Receipt display | O(n) | O(n) |
 
-- The program handles only the Pay operation.
-- Clicking the Receipt button executes the else block and clears the fields.
-- A separate receipt-generation operation must be implemented.
-
-**8. SQL injection vulnerability**
-
-- User input is directly concatenated into the SQL query.
-- Malicious input could modify the database query.
-- `PreparedStatement` must be used to execute parameterized SQL statements.
-
-**9. No proper window closing and connection management**
-
-- The program does not handle the window-closing event.
-- Database connections and statements may remain open.
-- Resources should be closed using try-with-resources, and the window should be disposed of properly.
-
-**10. Unhandled checked exceptions**
-
-- Database operations may generate `SQLException`.
-- `Thread.sleep()` may generate `InterruptedException`.
-- These exceptions are not handled, which can prevent successful compilation.
-
-### Task 1.2 – Repair the Design
-
-**Aim:** To separate the GUI from the payment-processing logic using a `FeeService` class.
-
-**Class Structure:**
-
-**FeeWindow**
-
-- Creates the user interface.
-- Accepts registration number and payment amount.
-- Handles Pay, Clear and Receipt button events.
-- Displays confirmation and error messages.
-
-**FeeService**
-
-- Validates registration number and payment amount.
-- Performs payment processing.
-- Communicates with the database using JDBC.
-- Returns the payment result.
-
-### Task 1.3 – Design Defence
-
-The redesigned program is easier to test and maintain because the GUI and business logic are separated. The FeeWindow class handles user interactions, while the FeeService class performs validation and payment processing. Each class has a single responsibility, making debugging and modification easier. The service class can also be tested independently without opening the GUI. Therefore, the redesigned system provides better code reusability, readability and maintainability.
-
-### Alternative Concept and Complexity Analysis
-
-**Using separate listener objects instead of one listener with an if-else chain:**
-
-- Each button can have its own ActionListener object.
-- The Pay button performs payment processing.
-- The Clear button clears the input fields.
-- The Receipt button generates the receipt.
-- A Swing Action can also be used to share the same action between buttons and menu items.
-
-**Time Complexity:**
-
-**Single listener with an if-else chain:**
-
-- In the worst case, it performs up to k comparisons for k buttons.
-- Time complexity: O(k).
-
-**Separate listener objects:**
-
-- Each button directly invokes its registered listener.
-- Event dispatch does not require searching through all button commands.
-- Time complexity: O(1) for listener selection, excluding the actual action processing.
-
-**Space Complexity:**
-
-- Single listener: O(1) additional listener objects.
-- Separate listeners: O(k) listener objects for k buttons.
-
-**Conclusion:**
-
-Separate listeners improve readability and reduce conditional checking. However, they require additional memory because each button has its own listener object.
-
+Here, n represents the length of the input or receipt text.
