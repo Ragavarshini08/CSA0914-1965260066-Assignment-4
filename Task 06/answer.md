@@ -227,4 +227,116 @@ END
 
 ## 14. Expected Output and Testing
 
-| Test | Input | Expected
+| Test | Input | Expected Result |
+|---|---|---|
+| Normal registration | Valid student details | Registration Successful |
+| Empty input | Student name empty | All fields are required |
+| Invalid email | abc123 | Invalid email address |
+| Duplicate registration | Same register number and event | Already registered |
+| Filter records | Select Hackathon | Only Hackathon records |
+| Export | Click Export | CSV file generated |
+
+**Example valid registration:**
+
+```text
+Student Name: Arun Kumar
+Register Number: 12345
+Department: CSE
+Email: arun@gmail.com
+Event: Hackathon
+
+Registration Successful
+```
+
+**Example invalid registration:**
+
+```text
+Student Name:
+Register Number: 12345
+Department: CSE
+Email: arun@gmail.com
+Event: Hackathon
+
+All fields are required
+```
+
+**Example duplicate registration:**
+
+```text
+Student Name: Arun Kumar
+Register Number: 12345
+Department: CSE
+Email: arun@gmail.com
+Event: Hackathon
+
+Already registered for this event
+```
+
+## 15. Event Dispatch Thread (EDT)
+
+The Event Dispatch Thread handles Swing GUI events. If database operations are performed directly on the EDT, the application may freeze.
+
+**Correct approach:** Use `SwingWorker` to perform database operations in the background and update the GUI after completion.
+
+Advantages:
+1. Prevents GUI freezing.
+2. Performs long-running tasks in the background.
+3. Updates the interface after completion.
+4. Improves user experience.
+
+## 16. Loading 100,000 Records vs Pagination
+
+| Parameter | Load All Records | Paginated Loading |
+|---|---|---|
+| Records loaded | 100,000 | Limited records per page |
+| Loading time | Generally higher | Generally lower initially |
+| Memory usage | High | Lower |
+| Responsiveness | May become slow | Better |
+| Database requests | Fewer | More |
+| Scalability | Less suitable | More suitable |
+
+SQL query for loading all records:
+
+```sql
+SELECT * FROM registrations;
+```
+
+SQL query for pagination:
+
+```sql
+SELECT * FROM registrations
+ORDER BY registration_id
+LIMIT 100 OFFSET 0;
+```
+
+Next page:
+
+```sql
+SELECT * FROM registrations
+ORDER BY registration_id
+LIMIT 100 OFFSET 100;
+```
+
+Third page:
+
+```sql
+SELECT * FROM registrations
+ORDER BY registration_id
+LIMIT 100 OFFSET 200;
+```
+
+**Conclusion:** Pagination is more suitable for large registration databases because it reduces the number of records loaded at a time and improves memory usage and GUI responsiveness. Large OFFSET values can still become expensive, so keyset pagination can be considered for very large datasets.
+
+## 17. Complexity Analysis
+
+Let `n` be the total number of registrations and `p` be the page size.
+
+| Operation | Time Complexity |
+|---|---|
+| Validate input | O(n) for string-based validation |
+| Insert registration | O(log n) approximately for indexed database insertion |
+| Duplicate checking | O(log n) with a suitable unique index |
+| Load all registrations | O(n) |
+| Load one page | O(p) returned rows, excluding database query overhead |
+| Filter registrations | Depends on database indexing and matching records |
+| Export registrations | O(n) |
