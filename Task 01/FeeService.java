@@ -1,37 +1,35 @@
 
-class FeeService {
+public class FeeService {
 
-    public String payFee(String regNo, String amount) {
+    public String processPayment(String name,
+                    String amount,
+                    String mode) {
 
-        if (regNo == null || regNo.trim().isEmpty()) {
+        if (name.trim().isEmpty())
+            return "Enter student name";
 
-            return "Registration number is required";
+        if (amount.trim().isEmpty())
+            return "Enter payment amount";
 
-        }
-
-        double a;
+        double value;
 
         try {
+            value = Double.parseDouble(amount);
 
-            a = Double.parseDouble(amount);
+            if (value <= 0)
+                return "Enter a valid amount";
 
         } catch (NumberFormatException e) {
-
-            return "Invalid amount";
-
+            return "Invalid payment amount";
         }
 
-        if (a <= 0) {
+        if (!mode.equals("Online") &&
+            !mode.equals("Cash"))
+            return "Select payment mode";
 
-            return "Amount must be positive";
-
-        }
-
-        // Payment validation successful.
-        // Database insertion can be performed here
-        // using JDBC and PreparedStatement.
-
-        return "Payment successful for " + regNo;
-
+        return "Payment Successful!\n" +
+               "Student: " + name +
+               "\nAmount: Rs. " + value +
+               "\nMode: " + mode;
     }
 }
